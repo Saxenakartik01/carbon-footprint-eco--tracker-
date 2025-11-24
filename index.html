@@ -1,0 +1,1383 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eco‑Tracker | Carbon Footprint Calculator</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1416;
+      --panel:#0f1e20;
+      --card:#112629;
+      --soft:#1a3b40;
+      --primary:#17c964;
+      --accent:#00e5ff;
+      --warning:#ffbe0b;
+      --danger:#ff3b3b;
+      --text:#e8f6f1;
+      --muted:#a8c3bc;
+      --glass:rgba(255,255,255,0.06);
+      --shadow:0 20px 40px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #062f2d88, transparent 60%),
+        radial-gradient(1000px 600px at 110% 10%, #063a5188, transparent 60%),
+        linear-gradient(180deg,#061012, #0b1416 40%, #081c1c);
+      overflow-x:hidden;
+    }
+
+    /* Floating hero glow */
+    .bg-glow{
+      position:fixed; inset:0; pointer-events:none; z-index:-1;
+      background:
+        radial-gradient(600px 300px at 70% 0%, rgba(0,229,255,.10), transparent 60%),
+        radial-gradient(500px 250px at 20% 100%, rgba(23,201,100,.10), transparent 60%);
+      filter: blur(20px);
+    }
+
+    /* Login screen */
+    .login-screen{
+      min-height:100dvh;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:40px;
+      padding: clamp(16px, 3vw, 40px);
+      align-items:center;
+    }
+    .login-hero{
+      background:linear-gradient(135deg, rgba(0,229,255,.14), rgba(23,201,100,.18));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:24px;
+      padding:40px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+      min-height:520px;
+    }
+    .login-hero:after{
+      content:"";
+      position:absolute; inset:-40px;
+      background:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+      opacity:.22; filter:saturate(1.2);
+      mix-blend: screen;
+    }
+    .badge{
+      display:inline-flex; gap:8px; align-items:center;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 12px; border-radius:999px; font-size:12px; letter-spacing:.4px;
+      position:relative; z-index:1;
+    }
+    .login-hero h1{
+      font-size: clamp(28px, 4.2vw, 58px);
+      line-height:1.05; margin:22px 0 12px; position:relative; z-index:1;
+      text-shadow:0 6px 24px rgba(0,0,0,.35);
+    }
+    .login-hero p{max-width:60ch; color:var(--muted); position:relative; z-index:1}
+    .login-hero .features{
+      display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:22px; position:relative; z-index:1;
+    }
+    .pill{
+      background:rgba(10,35,35,.6);
+      border:1px solid rgba(255,255,255,.08);
+      padding:12px 14px; border-radius:14px; font-size:12px; color:#d8efe8;
+      backdrop-filter: blur(6px);
+    }
+
+    .login-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:24px; padding:28px;
+      box-shadow:var(--shadow); max-width:520px; margin-inline:auto;
+      backdrop-filter: blur(6px);
+    }
+    label{display:block; font-weight:600; margin:14px 0 8px; color:#dff5ee}
+    input, select{
+      width:100%; padding:14px 16px; border-radius:12px; border:1px solid rgba(255,255,255,.10);
+      background:rgba(5,20,22,.7); color:var(--text);
+      outline:none; transition:.2s border-color, .2s background;
+    }
+    input:focus, select:focus{border-color:var(--accent); background:rgba(5,20,22,.92)}
+    .btn{
+      display:inline-flex; gap:10px; align-items:center; justify-content:center;
+      padding:12px 18px; border-radius:12px; border:1px solid transparent; cursor:pointer;
+      color:#01241a; background:linear-gradient(135deg,var(--primary),#06e39d);
+      font-weight:700; letter-spacing:.3px; box-shadow:0 8px 24px rgba(23,201,100,.35);
+    }
+    .btn.secondary{
+      background:transparent; color:var(--text);
+      border-color:rgba(255,255,255,.14);
+    }
+
+    /* App shell */
+    .app{display:none; min-height:100dvh}
+    header.navbar{
+      position:sticky; top:0; z-index:20;
+      background: rgba(7,20,22,.75);
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .navbar .wrap{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:16px; padding:12px 20px;
+    }
+    .brand{display:flex; gap:12px; align-items:center}
+    .brand i{color:var(--primary); font-size:22px}
+    .brand .title{font-weight:800; letter-spacing:.5px}
+    nav ul{display:flex; gap:8px; list-style:none; margin:0; padding:0}
+    nav a{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px;
+      border-radius:10px; color:#dff5ee; text-decoration:none; font-weight:600;
+      border:1px solid transparent;
+    }
+    nav a.active, nav a:hover{
+      border-color:rgba(255,255,255,.12); background:rgba(255,255,255,.05)
+    }
+    .logout{margin-left:12px}
+
+    main{padding:24px; max-width:1200px; margin-inline:auto}
+    .grid{display:grid; gap:18px}
+    .g-2{grid-template-columns:repeat(2,1fr)}
+    .g-3{grid-template-columns:repeat(3,1fr)}
+    .g-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:1000px){.login-screen{grid-template-columns:1fr}.g-3,.g-4{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:720px){.g-2,.g-3,.g-4{grid-template-columns:1fr}}
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px; padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .card header{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
+    .card h3{margin:0; font-size:18px}
+    .subtle{color:var(--muted); font-size:13px}
+
+    .hero{
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:18px; align-items:stretch;
+    }
+    @media (max-width:900px){.hero{grid-template-columns:1fr}}
+
+    .hero .visual{
+      border-radius:18px; overflow:hidden; position:relative; min-height:280px;
+      background:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .hero .visual .overlay{
+      position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.3), rgba(0,0,0,.55));
+      display:flex; align-items:flex-end; padding:18px;
+    }
+    .hero .visual .overlay h2{margin:0 0 4px; font-size:22px}
+    .hero .visual .overlay p{margin:0; color:#cfeae4}
+
+    .metrics{
+      display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+    }
+    .metric{
+      background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10);
+      border-radius:14px; padding:14px; display:flex; gap:12px; align-items:center;
+    }
+    .metric i{font-size:20px}
+    .metric .val{font-size:20px; font-weight:800}
+    .ok{color:var(--primary)} .warn{color:var(--warning)} .bad{color:var(--danger)}
+
+    .toggle{
+      display:inline-flex; gap:6px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+      border-radius:12px; padding:6px;
+    }
+    .toggle button{
+      background:transparent; border:none; color:var(--text); padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600
+    }
+    .toggle button.active{background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14)}
+
+    .breakdown{
+      display:grid; grid-template-columns:2fr 1fr; gap:18px; align-items:stretch;
+    }
+    @media (max-width:900px){.breakdown{grid-template-columns:1fr}}
+
+    .progress{height:10px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden}
+    .bar{height:100%; background:linear-gradient(90deg,var(--accent),#12f3b4)}
+
+    .section-title{font-size:22px; margin:8px 0 6px}
+    .category{
+      display:grid; grid-template-columns: repeat(4, 1fr); gap:14px;
+    }
+    @media (max-width:900px){.category{grid-template-columns: repeat(2, 1fr)}}
+    .cat-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden;
+    }
+    .cat-img{
+      height:120px; background-size:cover; background-position:center;
+      filter:saturate(1.05) contrast(1.05);
+    }
+    .cat-body{padding:12px}
+    .cat-body .percent{font-weight:800}
+
+    .note{
+      background:rgba(0,0,0,.35); border-left:3px solid var(--accent); padding:12px 14px; border-radius:10px;
+      color:#cfeae4; font-size:14px
+    }
+
+    /* AQI meter */
+    .aqi-meter{
+      height:12px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+      position:relative;
+    }
+    .aqi-bar{
+      height:100%;
+      width:0;
+      border-radius:999px;
+      background:#31d843;
+      transition:width .4s ease, background .4s ease;
+    }
+
+    /* Calculator */
+    .form-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px}
+    @media (max-width:900px){.form-grid{grid-template-columns:1fr}}
+    .field{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); padding:14px; border-radius:14px}
+    .inline{display:flex; gap:8px; align-items:center}
+    .split{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    .tips{display:grid; gap:10px}
+
+    .badge-chip{
+      display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); font-size:12px; color:#dff5ee;
+    }
+
+    /* About */
+    .about-grid{
+      display:grid; grid-template-columns: 1fr .9fr; gap:18px; align-items:start;
+    }
+    @media (max-width:900px){.about-grid{grid-template-columns:1fr}}
+    .avatar{
+      width:140px; height:140px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,.14);
+      box-shadow:0 10px 30px rgba(0,0,0,.3)
+    }
+    .socials{display:flex; gap:10px; margin-top:10px}
+    .socials a{
+      width:42px; height:42px; display:flex; align-items:center; justify-content:center;
+      border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:#dff5ee; text-decoration:none
+    }
+    footer{
+      padding:22px; color:#b8d7cf; text-align:center; border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(7,20,22,.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <!-- LOGIN -->
+  <section class="login-screen" id="loginScreen">
+    <div class="login-hero">
+      <span class="badge"><i class="fa-solid fa-leaf"></i> Eco‑Tracker • Carbon Smart Living</span>
+      <h1>Track. Reduce. Thrive.</h1>
+      <p>
+        Aapka personal carbon footprint Eco‑Tracker. Daily, weekly aur monthly impact ko real charts ke saath dekhiye,
+        aur actionable tips se apni life ko planet‑friendly banaiye. Hackathon‑ready polished UI, real‑life factors, aur
+        smart insights — sab ek jagah. 🌍
+      </p>
+
+      <div class="features">
+        <div class="pill"><i class="fa-solid fa-chart-line"></i> Live Graphs</div>
+        <div class="pill"><i class="fa-solid fa-car-side"></i> Travel + Food + Energy</div>
+        <div class="pill"><i class="fa-solid fa-seedling"></i> Plant Recommendations</div>
+        <div class="pill"><i class="fa-solid fa-bolt"></i> Grid Intensity Aware</div>
+        <div class="pill"><i class="fa-solid fa-shield-heart"></i> Safe/Caution/Danger Score</div>
+        <div class="pill"><i class="fa-solid fa-user-check"></i> Single Sign‑On</div>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <h2 style="margin:0 0 4px">Welcome back 👋</h2>
+      <p class="subtle" style="margin:0 0 18px">Login to continue to your dashboard</p>
+      <div class="field">
+        <label for="username">User ID</label>
+        <input id="username" placeholder="Enter ID: kartik" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter Password: 1111" autocomplete="current-password"/>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; margin-top:12px">
+        <button class="btn" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+        <button class="btn secondary" id="fillDemo"><i class="fa-regular fa-hand-pointer"></i> Autofill</button>
+      </div>
+      <p id="loginMsg" class="subtle" style="margin-top:10px"></p>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <div class="app" id="app">
+    <header class="navbar">
+      <div class="wrap">
+        <div class="brand">
+          <i class="fa-solid fa-earth-asia"></i>
+          <div>
+            <div class="title">Eco‑Tracker</div>
+            <div class="subtle" style="font-size:12px">Carbon Footprint Dashboard</div>
+          </div>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="#home" data-route="home" class="active"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="#calculator" data-route="calculator"><i class="fa-solid fa-calculator"></i> Eco‑Calculator</a></li>
+            <li><a href="#about" data-route="about"><i class="fa-solid fa-circle-info"></i> About</a></li>
+          </ul>
+        </nav>
+        <div>
+          <span class="badge-chip" id="userChip"><i class="fa-regular fa-user"></i> kartik</span>
+          <button class="btn secondary logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- HOME -->
+      <section id="home">
+        <div class="hero">
+          <div class="card">
+            <header>
+              <h3>Dashboard Overview</h3>
+              <div class="toggle" id="rangeToggle">
+                <button data-range="daily">Daily</button>
+                <button class="active" data-range="weekly">Weekly</button>
+                <button data-range="monthly">Monthly</button>
+              </div>
+            </header>
+            <div class="metrics">
+              <div class="metric">
+                <i class="fa-solid fa-cloud ok"></i>
+                <div>
+                  <div class="subtle">Today's Estimate</div>
+                  <div class="val" id="todayVal">—</div>
+                </div>
+              </div>
+              <div class="metric">
+                <i class="fa-solid fa-calendar-week warn"></i>
+                <div>
+                  <div class="subtle">This Week</div>
+                  <div class="val" id="weekVal">—</div>
+                </div>
+              </div>
+              <div class="metric">
+                <i class="fa-solid fa-calendar bad"></i>
+                <div>
+                  <div class="subtle">This Month</div>
+                  <div class="val" id="monthVal">—</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <canvas id="trendChart" height="120"></canvas>
+            </div>
+          </div>
+
+          <div class="visual">
+            <div class="overlay">
+              <div>
+                <h2>Make your lifestyle low‑carbon</h2>
+                <p>
+                  Track transport, electricity, food and waste. Get instant score and planet‑positive tips. Save results to monitor trends.
+                </p>
+                <div style="display:flex; gap:8px; margin-top:10px">
+                  <span class="badge-chip"><i class="fa-solid fa-car-side"></i> Transport</span>
+                  <span class="badge-chip"><i class="fa-solid fa-bolt"></i> Electricity</span>
+                  <span class="badge-chip"><i class="fa-solid fa-utensils"></i> Food</span>
+                  <span class="badge-chip"><i class="fa-solid fa-recycle"></i> Waste</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AQI CARD (new) -->
+        <div class="card" id="aqiCard" style="margin-top:18px">
+          <header>
+            <h3>Air Quality Index (AQI)</h3>
+            <span class="subtle" id="aqiLocation">Detecting location...</span>
+          </header>
+          <div class="inline" style="gap:16px; align-items:center; margin-top:4px">
+            <div style="font-size:32px; font-weight:800" id="aqiValue">—</div>
+            <div>
+              <div id="aqiLabel" style="font-weight:600">—</div>
+              <div class="subtle" id="aqiDesc">Real‑time AQI from nearby station</div>
+            </div>
+          </div>
+          <div class="aqi-meter" style="margin-top:10px">
+            <div class="aqi-bar" id="aqiBar"></div>
+          </div>
+          <div class="subtle" style="margin-top:8px; font-size:12px">
+            Scale: 0–50 Good • 51–100 Moderate • 101–150 Unhealthy (Sensitive) • 151–200 Unhealthy • 201–300 Very Unhealthy • 301+ Hazardous
+          </div>
+        </div>
+
+        <div class="breakdown" style="margin-top:18px">
+          <div class="card">
+            <header>
+              <h3>Category Breakdown</h3>
+              <span class="subtle">Based on your last saved calculation</span>
+            </header>
+            <div class="grid g-2">
+              <div>
+                <canvas id="breakdownChart" height="220"></canvas>
+              </div>
+              <div>
+                <div class="field">
+                  <div class="inline" style="justify-content:space-between">
+                    <div class="inline" style="gap:10px">
+                      <i class="fa-solid fa-house-chimney-window"></i>
+                      <strong>House (Electricity)</strong>
+                    </div>
+                    <span class="percent" id="p_elec">—</span>
+                  </div>
+                  <div class="progress" style="margin-top:8px"><div class="bar" id="b_elec" style="width:0%"></div></div>
+                </div>
+                <div class="field">
+                  <div class="inline" style="justify-content:space-between">
+                    <div class="inline" style="gap:10px">
+                      <i class="fa-solid fa-car-side"></i>
+                      <strong>Vehicle (Travel)</strong>
+                    </div>
+                    <span class="percent" id="p_trans">—</span>
+                  </div>
+                  <div class="progress" style="margin-top:8px"><div class="bar" id="b_trans" style="width:0%"></div></div>
+                </div>
+                <div class="field">
+                  <div class="inline" style="justify-content:space-between">
+                    <div class="inline" style="gap:10px">
+                      <i class="fa-solid fa-utensils"></i>
+                      <strong>Food</strong>
+                    </div>
+                    <span class="percent" id="p_food">—</span>
+                  </div>
+                  <div class="progress" style="margin-top:8px"><div class="bar" id="b_food" style="width:0%"></div></div>
+                </div>
+                <div class="field">
+                  <div class="inline" style="justify-content:space-between">
+                    <div class="inline" style="gap:10px">
+                      <i class="fa-solid fa-trash"></i>
+                      <strong>Waste</strong>
+                    </div>
+                    <span class="percent" id="p_waste">—</span>
+                  </div>
+                  <div class="progress" style="margin-top:8px"><div class="bar" id="b_waste" style="width:0%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <header>
+              <h3>Why it matters</h3>
+              <span class="subtle">Small steps → Big impact</span>
+            </header>
+            <div class="tips">
+              <div class="note"><i class="fa-solid fa-seedling"></i> Har mahine 2‑5 native plants/trees lagaiye — har tree ~20 kg CO₂/yr tak absorb kar sakta hai (location aur age par depend karta hai).</div>
+              <div class="note"><i class="fa-solid fa-solar-panel"></i> Electricity ko clean banaiye: LED bulbs, efficient AC (24‑26°C), standby off, aur rooftop solar consider karein.</div>
+              <div class="note"><i class="fa-solid fa-burger"></i> Red meat/processed meat ko kuch meals se replace karke pulses/veg opt karein — food footprint 20‑50% tak kam ho sakta hai.</div>
+              <div class="note"><i class="fa-solid fa-people-arrows"></i> Carpool, metro/train aur short trips ko walk/bicycle — travel emissions instantly drop.</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="section-title">Impact by Area</h3>
+        <div class="category">
+          <div class="cat-card">
+            <div class="cat-img" style="background-image:url('https://images.unsplash.com/photo-1518005068251-37900150dfca?q=80&w=1200&auto=format&fit=crop')"></div>
+            <div class="cat-body">
+              <div class="inline" style="gap:10px"><i class="fa-solid fa-house-chimney-window"></i> <strong>House</strong></div>
+              <div class="subtle">Electricity, AC, appliances</div>
+              <div class="percent" id="card_elec">—</div>
+            </div>
+          </div>
+          <div class="cat-card">
+            <div class="cat-img" style="background-image:url('https://images.unsplash.com/photo-1449960238630-7e720e630019?q=80&w=1200&auto=format&fit=crop')"></div>
+            <div class="cat-body">
+              <div class="inline" style="gap:10px"><i class="fa-solid fa-car-side"></i> <strong>Vehicle</strong></div>
+              <div class="subtle">Car, bike, train, flights</div>
+              <div class="percent" id="card_trans">—</div>
+            </div>
+          </div>
+          <div class="cat-card">
+            <div class="cat-img" style="background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop')"></div>
+            <div class="cat-body">
+              <div class="inline" style="gap:10px"><i class="fa-solid fa-bowl-food"></i> <strong>Food</strong></div>
+              <div class="subtle">Diet & meal choices</div>
+              <div class="percent" id="card_food">—</div>
+            </div>
+          </div>
+          <div class="cat-card">
+            <div class="cat-img" style="background-image:url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?q=80&w=1200&auto=format&fit=crop')"></div>
+            <div class="cat-body">
+              <div class="inline" style="gap:10px"><i class="fa-solid fa-recycle"></i> <strong>Waste</strong></div>
+              <div class="subtle">Trash & recycling</div>
+              <div class="percent" id="card_waste">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALCULATOR -->
+      <section id="calculator" style="display:none">
+        <div class="card">
+          <header>
+            <h3>Eco‑Calculator</h3>
+            <span class="subtle">Real‑life emission factors applied</span>
+          </header>
+
+          <div class="form-grid">
+
+            <div class="field">
+              <h4 class="inline" style="gap:10px; margin:0 0 10px"><i class="fa-solid fa-car-side"></i> Travel (per day)</h4>
+              <div class="split">
+                <div>
+                  <label>Bike (km/day) — Motorbike</label>
+                  <input type="number" id="km_bike" min="0" step="0.1" placeholder="e.g. 8" />
+                </div>
+                <div>
+                  <label>Car (km/day)</label>
+                  <input type="number" id="km_car" min="0" step="0.1" placeholder="e.g. 12" />
+                </div>
+                <div>
+                  <label>Train/Metro (km/day)</label>
+                  <input type="number" id="km_train" min="0" step="0.1" placeholder="e.g. 10" />
+                </div>
+                <div>
+                  <label>Airplane (km/day, averaged)</label>
+                  <input type="number" id="km_plane" min="0" step="0.1" placeholder="e.g. 0 (or avg)" />
+                </div>
+                <div>
+                  <label>Travel days per week</label>
+                  <input type="number" id="days_travel" min="0" max="7" step="1" value="5" />
+                </div>
+              </div>
+              <div class="subtle" style="margin-top:8px">
+                Factors (kg CO₂ per passenger‑km): Bike 0.103 • Car 0.192 • Train 0.041 • Plane 0.255
+              </div>
+            </div>
+
+            <div class="field">
+              <h4 class="inline" style="gap:10px; margin:0 0 10px"><i class="fa-solid fa-bolt"></i> Electricity</h4>
+              <div class="split">
+                <div>
+                  <label>Consumption</label>
+                  <input type="number" id="elec_val" min="0" step="0.1" placeholder="e.g. 6" />
+                </div>
+                <div>
+                  <label>Period</label>
+                  <select id="elec_period">
+                    <option value="daily">per Day (kWh)</option>
+                    <option value="weekly">per Week (kWh)</option>
+                    <option value="monthly" selected>per Month (kWh)</option>
+                    <option value="yearly">per Year (kWh)</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Grid Intensity</label>
+                  <select id="grid_intensity">
+                    <option value="india">India ~0.70 kg/kWh</option>
+                    <option value="global" selected>Global avg ~0.45 kg/kWh</option>
+                    <option value="clean">Mostly clean ~0.05 kg/kWh</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Solar/Renewables (%)</label>
+                  <input type="number" id="renew_share" min="0" max="100" value="0"/>
+                </div>
+              </div>
+              <div class="subtle" style="margin-top:8px">
+                Adjusts for your renewables share. Effective factor = Grid × (1 − Renew%).
+              </div>
+            </div>
+
+            <div class="field">
+              <h4 class="inline" style="gap:10px; margin:0 0 10px"><i class="fa-solid fa-bowl-food"></i> Food</h4>
+              <div class="split">
+                <div>
+                  <label>Diet type</label>
+                  <select id="diet">
+                    <option value="vegetarian" selected>Vegetarian</option>
+                    <option value="nonveg">Non‑Vegetarian</option>
+                    <option value="vegan">Vegan</option>
+                    <option value="eggetarian">Eggetarian</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Meals per day</label>
+                  <input type="number" id="meals_per_day" min="1" max="6" value="3"/>
+                </div>
+                <div id="nonveg_block" style="display:none">
+                  <label>Non‑veg meals per week</label>
+                  <input type="number" id="nonveg_meals_week" min="0" max="21" value="7"/>
+                </div>
+              </div>
+              <div class="subtle" style="margin-top:8px">
+                Approx daily CO₂e: Vegan 2.5 kg • Vegetarian 3.2 kg • Eggetarian 4.0 kg • Non‑Veg 5.0 kg (scaled by meals).
+              </div>
+            </div>
+
+            <div class="field">
+              <h4 class="inline" style="gap:10px; margin:0 0 10px"><i class="fa-solid fa-recycle"></i> Waste</h4>
+              <div class="split">
+                <div>
+                  <label>Waste (kg per week)</label>
+                  <input type="number" id="waste_kg_week" min="0" step="0.1" placeholder="e.g. 5"/>
+                </div>
+                <div>
+                  <label>Recycling/Composting (%)</label>
+                  <input type="number" id="recycle_pct" min="0" max="100" value="0"/>
+                </div>
+              </div>
+              <div class="subtle" style="margin-top:8px">
+                Factor: ~0.75 kg CO₂e per kg mixed waste (after transport & landfill). Recycling reduces effective waste.
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:12px">
+            <button class="btn" id="calcBtn"><i class="fa-solid fa-calculator"></i> Calculate Footprint</button>
+            <button class="btn secondary" id="resetCalc"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" style="display:none; margin-top:16px" class="grid g-2">
+          <div class="card">
+            <header>
+              <h3>Your Results</h3>
+              <span class="subtle">Daily • Weekly • Monthly • Yearly</span>
+            </header>
+            <div class="grid g-3">
+              <div class="field">
+                <div class="subtle">Daily Total</div>
+                <div class="val" id="r_daily">—</div>
+              </div>
+              <div class="field">
+                <div class="subtle">Weekly Total</div>
+                <div class="val" id="r_weekly">—</div>
+              </div>
+              <div class="field">
+                <div class="subtle">Monthly Total</div>
+                <div class="val" id="r_monthly">—</div>
+              </div>
+              <div class="field">
+                <div class="subtle">Yearly Total</div>
+                <div class="val" id="r_yearly">—</div>
+              </div>
+              <div class="field">
+                <div class="subtle">Score</div>
+                <div class="inline" style="gap:8px">
+                  <span id="scoreBadge" class="badge-chip"><i class="fa-solid fa-circle"></i> —</span>
+                  <span class="subtle" id="scoreNote">—</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <canvas id="resultBreakdown" height="140"></canvas>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:12px">
+              <button class="btn" id="saveToDash"><i class="fa-solid fa-cloud-arrow-up"></i> Save to Dashboard</button>
+              <span class="subtle">Saving will update Home charts & breakdown</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <header>
+              <h3>Recommendations for You</h3>
+              <span class="subtle">Personalized quick wins</span>
+            </header>
+            <div id="tips" class="tips"></div>
+
+            <div class="field" style="margin-top:12px">
+              <div class="inline" style="gap:10px">
+                <i class="fa-solid fa-tree"></i>
+                <strong>Planting plan</strong>
+              </div>
+              <div id="plantAdvice" class="subtle" style="margin-top:6px">—</div>
+              <div class="grid g-2" style="margin-top:10px">
+                <div class="note"><strong>India natives:</strong> Neem, Peepal, Banyan, Ashoka, Jamun, Amaltas, Gulmohar. Indoor: Areca Palm, Snake Plant, Money Plant.</div>
+                <div class="note"><strong>How many?</strong> Calculator suggests a minimum based on your annual footprint. Prefer local/native species and ensure watering for 2‑3 years.</div>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top:12px">
+              <div class="inline" style="gap:10px"><i class="fa-solid fa-circle-info"></i> <strong>Data & Factors</strong></div>
+              <ul class="subtle" style="margin:8px 0 0; padding-left:18px">
+                <li>Transport factors (kg CO₂ per passenger‑km): Car 0.192, Motorbike 0.103, Train 0.041, Plane 0.255 (UK BEIS/DEFRA averages)</li>
+                <li>Electricity: Global avg ~0.45, India ~0.70, Clean ~0.05 kg CO₂/kWh (IEA & grid mix estimates)</li>
+                <li>Food diet daily avg: Vegan ~2.5, Vegetarian ~3.2, Eggetarian ~4.0, Non‑veg ~5.0 kg CO₂e/day (meta‑analyses incl. Poore & Nemecek 2018)</li>
+                <li>Waste: ~0.75 kg CO₂e per kg mixed MSW (simplified lifecycle est.)</li>
+                <li>Target guidance: <2 tCO₂e/year per person = planet‑friendly, 2–6 caution, >6 high</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about" style="display:none">
+        <div class="card">
+          <header>
+            <h3>About the Project</h3>
+            <span class="subtle">Eco‑Tracker — Carbon Footprint & Eco‑Habits</span>
+          </header>
+          <div class="about-grid">
+            <div>
+              <p>
+                Eco‑Tracker ek lightweight lekin powerful web app hai jo aapke lifestyle ke 4 major areas — Travel, Electricity,
+                Food, aur Waste — ka carbon impact estimate karta hai. Isme real‑life emission factors, clean UI, live charts,
+                aur actionable recommendations diye gaye hain taaki aap apna footprint kam kar sakein bina complexity ke.
+              </p>
+              <p>
+                Aap har calculation ko dashboard par save kar sakte hain, aur time ke saath trends dekh sakte hain.
+                Calculator grid intensity (India / Global / Clean) ka effect bhi dikhata hai. Result ke basis par aapko
+                personalized tips milti hain — jaise carpooling, diet tweaks, efficient appliances, aur sabse zaroori:
+                trees/plantation (with native species). 🌱
+              </p>
+
+              <div class="note"><i class="fa-solid fa-circle-exclamation"></i> Disclaimer: Ye educational estimates hain.
+                Real footprint geography, habits, season aur product lifecycles par depend karta hai.</div>
+            </div>
+
+            <div class="field">
+              <div class="inline" style="gap:12px; align-items:center">
+                <img class="avatar" src="self.jpeg" alt="Kartik Saxena">
+                <div>
+                  <h4 style="margin:0 0 4px">Kartik SAXENA</h4>
+                  <div class="subtle">Builder • Designer • Eco‑Enthusiast</div>
+                  <div class="socials">
+                    <a href="https://instagram.com/" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://facebook.com/" target="_blank" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://twitter.com/" target="_blank" title="Twitter/X"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="https://linkedin.com/" target="_blank" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+                  </div>
+                </div>
+              </div>
+              <div class="subtle" style="margin-top:10px">Follow for updates, UI drops and climate‑tech experiments.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      © <span id="yr"></span> Eco‑Tracker • Built with ❤️ for the planet • Made by Kartik SAXENA
+    </footer>
+  </div>
+
+  <script>
+    // ------------- Utils & State -------------
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+
+    const EF = {
+      transport: { // kg CO2 per passenger-km
+        bike: 0.103, // motorbike
+        car: 0.192,  // petrol/diesel average
+        train: 0.041,
+        plane: 0.255
+      },
+      electricityGrid: {
+        india: 0.70,
+        global: 0.45,
+        clean: 0.05
+      },
+      foodDaily: { // kg CO2e per day baseline (3 meals)
+        vegan: 2.5,
+        vegetarian: 3.2,
+        eggetarian: 4.0,
+        nonveg: 5.0
+      },
+      wastePerKg: 0.75 // kg CO2e per kg mixed waste
+    };
+
+    const WEEK_PER_MONTH = 4.33;
+    const rnd = (n) => Math.round(n * 100) / 100;
+    const fmt = (n, unit = "kg") => `${rnd(n)} ${unit} CO₂e`;
+
+    const initialData = {
+      lastSaved: null,   // object: {byCategory:..., totals:..., ts:...}
+      trend: null        // arrays for daily, weekly, monthly
+    };
+
+    function saveState(data){
+      localStorage.setItem("eco_state", JSON.stringify(data));
+    }
+    function loadState(){
+      const raw = localStorage.getItem("eco_state");
+      return raw ? JSON.parse(raw) : initialData;
+    }
+
+    // ------------- Login Logic -------------
+    const loginScreen = $("#loginScreen");
+    const app = $("#app");
+    const loginBtn = $("#loginBtn");
+    const fillDemo = $("#fillDemo");
+    const loginMsg = $("#loginMsg");
+    const logoutBtn = $("#logoutBtn");
+
+    fillDemo.addEventListener("click", ()=>{
+      $("#username").value = "kartik";
+      $("#password").value = "1111";
+      loginMsg.textContent = "Demo credentials filled ✔";
+    });
+
+    function doLogin(){
+      const u = ($("#username").value || "").trim().toLowerCase();
+      const p = ($("#password").value || "").trim();
+      if(u === "kartik" && p === "1111"){
+        localStorage.setItem("eco_user","kartik");
+        loginScreen.style.display = "none";
+        app.style.display = "block";
+        $("#userChip").innerHTML = `<i class="fa-regular fa-user"></i> ${u}`;
+        initDashboard();
+      }else{
+        loginMsg.textContent = "Invalid ID or Password. Try: kartik / 1111";
+      }
+    }
+    loginBtn.addEventListener("click", doLogin);
+    document.addEventListener("keydown", (e)=>{ if(e.key==="Enter" && loginScreen.style.display!=="none") doLogin(); });
+    logoutBtn.addEventListener("click", ()=>{
+      localStorage.removeItem("eco_user");
+      location.reload();
+    });
+
+    // Auto login if present
+    if(localStorage.getItem("eco_user")==="kartik"){
+      loginScreen.style.display = "none";
+      app.style.display = "block";
+      $("#userChip").innerHTML = `<i class="fa-regular fa-user"></i> kartik`;
+      initDashboard();
+    }
+
+    // ------------- Router (tabs) -------------
+    const routes = $$("#app nav a");
+    routes.forEach(a=>{
+      a.addEventListener("click", (e)=>{
+        routes.forEach(x=>x.classList.remove("active"));
+        a.classList.add("active");
+        const target = a.dataset.route;
+        ["home","calculator","about"].forEach(id=>$("#"+id).style.display = (id===target?"block":"none"));
+        if(target==="home") refreshHome();
+      });
+    });
+
+    // ------------- Calculator Logic -------------
+    $("#diet").addEventListener("change", (e)=>{
+      $("#nonveg_block").style.display = e.target.value === "nonveg" ? "block" : "none";
+    });
+
+    function computeEmissions(input){
+      // Transport weekly
+      const tDailyActive = (
+        (Number(input.km_bike)||0)*EF.transport.bike +
+        (Number(input.km_car)||0)*EF.transport.car +
+        (Number(input.km_train)||0)*EF.transport.train +
+        (Number(input.km_plane)||0)*EF.transport.plane
+      );
+      const travelDays = Math.min(7, Math.max(0, Number(input.days_travel)||0));
+      const weeklyTransport = tDailyActive * travelDays;
+      const dailyTransport = weeklyTransport/7;
+      const monthlyTransport = weeklyTransport * WEEK_PER_MONTH;
+      const yearlyTransport = weeklyTransport * 52;
+
+      // Electricity
+      const val = Number(input.elec_val)||0;
+      const period = input.elec_period;
+      const grid = EF.electricityGrid[input.grid_intensity] || EF.electricityGrid.global;
+      const renew = Math.min(100, Math.max(0, Number(input.renew_share)||0)) / 100;
+      const effGrid = grid * (1 - renew);
+
+      let kwhPerDay = 0;
+      if(period==="daily") kwhPerDay = val;
+      if(period==="weekly") kwhPerDay = val/7;
+      if(period==="monthly") kwhPerDay = val/30;
+      if(period==="yearly") kwhPerDay = val/365;
+
+      const dailyElec = kwhPerDay * effGrid;
+      const weeklyElec = dailyElec * 7;
+      const monthlyElec = dailyElec * 30;
+      const yearlyElec = dailyElec * 365;
+
+      // Food
+      const base = EF.foodDaily[input.diet] || EF.foodDaily.vegetarian;
+      const meals = Math.min(6, Math.max(1, Number(input.meals_per_day)||3));
+      let dailyFood = base * (meals / 3);
+      if(input.diet === "nonveg"){
+        // refine with non-veg meals per week (0-21). Scale between vegetarian and non-veg baseline.
+        const nvm = Math.min(21, Math.max(0, Number(input.nonveg_meals_week)||7));
+        const mixRatio = nvm/21; // 0 (veg-like) -> 1 (full non-veg)
+        const blended = EF.foodDaily.vegetarian*(1-mixRatio) + EF.foodDaily.nonveg*mixRatio;
+        dailyFood = blended * (meals/3);
+      }
+      const weeklyFood = dailyFood * 7;
+      const monthlyFood = dailyFood * 30;
+      const yearlyFood = dailyFood * 365;
+
+      // Waste
+      const wasteKgW = Math.max(0, Number(input.waste_kg_week)||0);
+      const recycle = Math.min(100, Math.max(0, Number(input.recycle_pct)||0)) / 100;
+      const effectiveWaste = wasteKgW * (1 - recycle);
+      const weeklyWaste = effectiveWaste * EF.wastePerKg;
+      const dailyWaste = weeklyWaste/7;
+      const monthlyWaste = weeklyWaste * WEEK_PER_MONTH;
+      const yearlyWaste = weeklyWaste * 52;
+
+      const daily = dailyTransport + dailyElec + dailyFood + dailyWaste;
+      const weekly = weeklyTransport + weeklyElec + weeklyFood + weeklyWaste;
+      const monthly = monthlyTransport + monthlyElec + monthlyFood + monthlyWaste;
+      const yearly = yearlyTransport + yearlyElec + yearlyFood + yearlyWaste;
+
+      const byCategory = {
+        transport: {daily: dailyTransport, weekly: weeklyTransport, monthly: monthlyTransport, yearly: yearlyTransport},
+        electricity: {daily: dailyElec, weekly: weeklyElec, monthly: monthlyElec, yearly: yearlyElec},
+        food: {daily: dailyFood, weekly: weeklyFood, monthly: monthlyFood, yearly: yearlyFood},
+        waste: {daily: dailyWaste, weekly: weeklyWaste, monthly: monthlyWaste, yearly: yearlyWaste}
+      };
+
+      return { totals:{daily,weekly,monthly,yearly}, byCategory, annualTonnes: yearly/1000 };
+    }
+
+    function classify(annualTonnes){
+      if(annualTonnes < 2) return {label:"Safe", color:"var(--primary)", note:"Planet‑friendly range (<2 tCO₂e/yr)"};
+      if(annualTonnes < 6) return {label:"Caution", color:"var(--warning)", note:"Scope to improve (2–6 tCO₂e/yr)"};
+      return {label:"Danger", color:"var(--danger)", note:"High footprint (>6 tCO₂e/yr)"};
+    }
+
+    function buildTips(res){
+      const tips = [];
+      const bc = res.byCategory;
+      // Dominant category:
+      const entries = [
+        ["Transport", bc.transport.yearly],
+        ["Electricity", bc.electricity.yearly],
+        ["Food", bc.food.yearly],
+        ["Waste", bc.waste.yearly]
+      ].sort((a,b)=>b[1]-a[1]);
+
+      // Always include tree planting
+      tips.push({
+        icon:"fa-tree",
+        text:"Har mahine 2‑5 native ped/plant lagaiye. Local species choose karein aur 2‑3 saal care zaroori hai."
+      });
+
+      // Category-driven suggestions
+      if(entries[0][0]==="Transport"){
+        tips.push({icon:"fa-person-walking", text:"Short trips ko walk/cycle karein, ya carpool/metro use karein. Week me 3 din carpool = 15‑30% cut."});
+        tips.push({icon:"fa-plane-slash", text:"Flights avoid/club karein; <800 km pe train consider karein. 1 short flight skip = 100–300 kg CO₂e save."});
+      } else if(entries[0][0]==="Electricity"){
+        tips.push({icon:"fa-lightbulb", text:"LED bulbs + inverter AC + 24‑26°C setpoint. Vampire loads band rakhein (standby off)."});
+        tips.push({icon:"fa-solar-panel", text:"Rooftop solar/green tariff consider karein; washing machine cold cycles use karein."});
+      } else if(entries[0][0]==="Food"){
+        tips.push({icon:"fa-seedling", text:"Haftay me 2 veg‑only din karein; red meat ko pulses/soy se replace karein."});
+        tips.push({icon:"fa-apple-whole", text:"Seasonal, local produce buy karein — transport + storage footprint down."});
+      } else if(entries[0][0]==="Waste"){
+        tips.push({icon:"fa-recycle", text:"Dry/wet/aluminium separation; paper, metal, plastic recycle karein. Compost wet waste at home/community."});
+        tips.push({icon:"fa-bottle-water", text:"Single‑use plastic avoid; refillable bottle aur cloth bag use karein."});
+      }
+
+      // Extra generic if less than 4
+      const generic = [
+        {icon:"fa-plug", text:"Smart power strips lagaiye. Charger/TV standby ko off rakhein."},
+        {icon:"fa-shower", text:"Shorter showers & bucket use — water heating energy kam."},
+        {icon:"fa-bus", text:"Office ke liye public transport try karein 2‑3 din/hafta."},
+        {icon:"fa-mug-hot", text:"Batch cooking & pressure cooker — kitchen energy savings."}
+      ];
+      let i=0;
+      while(tips.length<4 && i<generic.length){ tips.push(generic[i++]); }
+      return tips.slice(0,6);
+    }
+
+    // Hook up calculator
+    $("#calcBtn").addEventListener("click", ()=>{
+      const input = {
+        km_bike: $("#km_bike").value,
+        km_car: $("#km_car").value,
+        km_train: $("#km_train").value,
+        km_plane: $("#km_plane").value,
+        days_travel: $("#days_travel").value,
+        elec_val: $("#elec_val").value,
+        elec_period: $("#elec_period").value,
+        grid_intensity: $("#grid_intensity").value,
+        renew_share: $("#renew_share").value,
+        diet: $("#diet").value,
+        meals_per_day: $("#meals_per_day").value,
+        nonveg_meals_week: $("#nonveg_meals_week").value,
+        waste_kg_week: $("#waste_kg_week").value,
+        recycle_pct: $("#recycle_pct").value
+      };
+
+      const res = computeEmissions(input);
+      // Update UI
+      $("#results").style.display = "grid";
+      $("#r_daily").textContent = fmt(res.totals.daily);
+      $("#r_weekly").textContent = fmt(res.totals.weekly);
+      $("#r_monthly").textContent = fmt(res.totals.monthly);
+      $("#r_yearly").textContent = `${rnd(res.totals.yearly/1000)} t CO₂e`;
+
+      const c = classify(res.annualTonnes);
+      const sb = $("#scoreBadge");
+      sb.style.borderColor = c.color; sb.style.color = c.color;
+      sb.innerHTML = `<i class="fa-solid fa-circle" style="color:${c.color}"></i> ${c.label}`;
+      $("#scoreNote").textContent = c.note;
+
+      // Tips
+      const tips = buildTips(res);
+      const tipsEl = $("#tips"); tipsEl.innerHTML = "";
+      tips.forEach(t=>{
+        const div = document.createElement("div");
+        div.className = "note";
+        div.innerHTML = `<i class="fa-solid ${t.icon}"></i> ${t.text}`;
+        tipsEl.appendChild(div);
+      });
+
+      // Plant advice
+      const annualKg = res.totals.yearly;
+      const offsetPerTree = 21; // kg CO2e per year (conservative)
+      const treesForOneThird = Math.max(2, Math.ceil((annualKg/3)/offsetPerTree));
+      $("#plantAdvice").innerHTML = `Aapka annual footprint ~ <strong>${rnd(annualKg/1000)} tCO₂e</strong> hai. Kam se kam <strong>${treesForOneThird} native trees</strong> lagaiye (1/3 offset target). Location/anukoolta ke hisaab se aur zyada bhi kar sakte hain. 🌳`;
+
+      // Result breakdown chart
+      renderResultBreakdown(res);
+
+      // Wire save
+      $("#saveToDash").onclick = ()=>{
+        const payload = {
+          ts: Date.now(),
+          byCategory: res.byCategory,
+          totals: res.totals,
+          annualTonnes: res.annualTonnes
+        };
+        const st = loadState();
+        st.lastSaved = payload;
+        // Refresh/generate trends using latest monthly
+        st.trend = buildTrends(payload);
+        saveState(st);
+        alert("Saved to dashboard! Home charts updated ✅");
+        refreshHome();
+      };
+    });
+
+    $("#resetCalc").addEventListener("click", ()=>{
+      ["km_bike","km_car","km_train","km_plane","elec_val","renew_share","meals_per_day","nonveg_meals_week","waste_kg_week","recycle_pct"].forEach(id=>{
+        const el = $("#"+id);
+        if(id==="renew_share") el.value = 0;
+        else if(id==="meals_per_day") el.value = 3;
+        else if(id==="nonveg_meals_week") el.value = 7;
+        else if(id==="waste_kg_week") el.value = "";
+        else el.value="";
+      });
+      $("#elec_period").value="monthly";
+      $("#grid_intensity").value="global";
+      $("#diet").value="vegetarian";
+      $("#nonveg_block").style.display="none";
+      $("#results").style.display="none";
+    });
+
+    // ------------- Charts -------------
+    let trendChart, breakdownChart, resultBreakdownChart;
+
+    function makeGradient(ctx, color1, color2){
+      const g = ctx.createLinearGradient(0,0,0,240);
+      g.addColorStop(0, color1);
+      g.addColorStop(1, color2);
+      return g;
+    }
+
+    function renderTrend(range="weekly"){
+      const st = loadState();
+      const cvs = $("#trendChart");
+      if(trendChart) trendChart.destroy();
+
+      const ctx = cvs.getContext("2d");
+      const data = st.trend || buildTrends(st.lastSaved);
+      const map = {
+        daily: { labels: data.daily.labels, values: data.daily.values },
+        weekly:{ labels: data.weekly.labels, values: data.weekly.values },
+        monthly:{labels: data.monthly.labels, values: data.monthly.values }
+      };
+      const chosen = map[range];
+
+      trendChart = new Chart(ctx, {
+        type:"line",
+        data:{
+          labels: chosen.labels,
+          datasets:[{
+            label:"Total Footprint",
+            data: chosen.values,
+            fill:true,
+            borderColor:"#12f3b4",
+            backgroundColor: makeGradient(ctx, "rgba(18,243,180,.35)", "rgba(0,0,0,0)"),
+            tension:.35,
+            pointRadius:3,
+            pointBackgroundColor:"#00e5ff"
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{display:false},
+            tooltip:{ callbacks:{ label:(ctx)=> fmt(ctx.parsed.y) } }
+          },
+          scales:{
+            x:{ grid:{color:"rgba(255,255,255,.06)"}, ticks:{color:"#cfeae4"} },
+            y:{ grid:{color:"rgba(255,255,255,.06)"}, ticks:{color:"#cfeae4"}, beginAtZero:true }
+          }
+        }
+      });
+    }
+
+    function renderBreakdown(){
+      const cvs = $("#breakdownChart");
+      if(breakdownChart) breakdownChart.destroy();
+      const ctx = cvs.getContext("2d");
+      const st = loadState();
+      const ls = st.lastSaved;
+      const vals = ls ? [
+        ls.byCategory.electricity.monthly,
+        ls.byCategory.transport.monthly,
+        ls.byCategory.food.monthly,
+        ls.byCategory.waste.monthly
+      ] : [30,25,20,10];
+
+      breakdownChart = new Chart(ctx, {
+        type:"doughnut",
+        data:{
+          labels:["Electricity","Transport","Food","Waste"],
+          datasets:[{
+            data: vals,
+            backgroundColor:["#00e5ff","#12f3b4","#ffd166","#ef476f"],
+            borderColor:"rgba(0,0,0,0)",
+            hoverOffset:6
+          }]
+        },
+        options:{
+          plugins:{ legend:{position:"bottom", labels:{color:"#e8f6f1"}} }
+        }
+      });
+
+      // Update % UI
+      const total = vals.reduce((a,b)=>a+b,0) || 1;
+      const pct = vals.map(v=> Math.round(v*100/total));
+      $("#p_elec").textContent = pct[0]+"%"; $("#b_elec").style.width=pct[0]+"%"; $("#card_elec").textContent = pct[0]+"%";
+      $("#p_trans").textContent = pct[1]+"%"; $("#b_trans").style.width=pct[1]+"%"; $("#card_trans").textContent = pct[1]+"%";
+      $("#p_food").textContent  = pct[2]+"%"; $("#b_food").style.width=pct[2]+"%"; $("#card_food").textContent  = pct[2]+"%";
+      $("#p_waste").textContent = pct[3]+"%"; $("#b_waste").style.width=pct[3]+"%"; $("#card_waste").textContent = pct[3]+"%";
+    }
+
+    function renderResultBreakdown(res){
+      const cvs = $("#resultBreakdown");
+      if(resultBreakdownChart) resultBreakdownChart.destroy();
+      const ctx = cvs.getContext("2d");
+      resultBreakdownChart = new Chart(ctx, {
+        type:"bar",
+        data:{
+          labels:["Electricity","Transport","Food","Waste"],
+          datasets:[{
+            label:"Monthly",
+            data:[
+              res.byCategory.electricity.monthly,
+              res.byCategory.transport.monthly,
+              res.byCategory.food.monthly,
+              res.byCategory.waste.monthly
+            ],
+            backgroundColor:["#00e5ff","#12f3b4","#ffd166","#ef476f"],
+            borderRadius:8
+          }]
+        },
+        options:{
+          plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(ctx)=>fmt(ctx.parsed.y)}} },
+          scales:{
+            x:{ ticks:{color:"#cfeae4"}, grid:{display:false} },
+            y:{ ticks:{color:"#cfeae4"}, grid:{color:"rgba(255,255,255,.06)"}, beginAtZero:true }
+          }
+        }
+      });
+    }
+
+    // Build sample trends based on last saved monthly
+    function buildTrends(last){
+      const baseMonthly = last ? last.totals.monthly : 85; // kg CO2e
+      // Daily for last 7 days: around monthly/30
+      const dailyAvg = baseMonthly/30;
+      const daily = Array.from({length:7}, (_,i)=> rnd(dailyAvg * (0.85 + Math.sin(i)*0.05 + (Math.random()*0.1))));
+      const weekly = Array.from({length:8}, (_,i)=> rnd(dailyAvg*7 * (0.9 + Math.sin(i/2)*0.07 + (Math.random()*0.12))));
+      const monthly = Array.from({length:12}, (_,i)=> rnd(baseMonthly * (0.9 + Math.sin(i/2)*0.08 + (Math.random()*0.12))));
+      return {
+        daily:  { labels:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], values: daily },
+        weekly: { labels:["W‑1","W‑2","W‑3","W‑4","W‑5","W‑6","W‑7","W‑8"], values: weekly },
+        monthly:{ labels:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], values: monthly }
+      };
+    }
+
+    // ------------- Home Refresh -------------
+    function refreshHome(){
+      const st = loadState();
+      const ls = st.lastSaved;
+
+      // Summary metrics
+      const today = ls ? rnd(ls.totals.daily) : 2.8;
+      const week = ls ? rnd(ls.totals.weekly) : 19.6;
+      const month = ls ? rnd(ls.totals.monthly) : 85.2;
+
+      $("#todayVal").textContent = fmt(today);
+      $("#weekVal").textContent = fmt(week);
+      $("#monthVal").textContent = fmt(month);
+
+      renderTrend($("#rangeToggle .active")?.dataset.range || "weekly");
+      renderBreakdown();
+    }
+
+    // Range toggle
+    $$("#rangeToggle button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        $$("#rangeToggle button").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        renderTrend(btn.dataset.range);
+      });
+    });
+
+    // ------------- AQI (Air Quality Index) -------------
+    const AQI_MAX = 500;
+
+    function classifyAQI(aqi){
+      if(aqi <= 50) return {label:"Good", color:"#31d843", note:"Air is clean. Normal outdoor activities safe."};
+      if(aqi <= 100) return {label:"Moderate", color:"#f1c40f", note:"Acceptable air quality, lekin sensitive log exposure kam karein."};
+      if(aqi <= 150) return {label:"Unhealthy (Sensitive Groups)", color:"#e67e22", note:"Bacche, buzurg aur heart/lung patients outdoor time kam karein."};
+      if(aqi <= 200) return {label:"Unhealthy", color:"#e74c3c", note:"Sabhi logon ko outdoors me lamba time spend karne se bachna chahiye."};
+      if(aqi <= 300) return {label:"Very Unhealthy", color:"#8e44ad", note:"Severe conditions — sirf zaroori kaam ke liye hi bahar niklein."};
+      return {label:"Hazardous", color:"#7e0023", note:"Bahut kharab hawa — ghar ke andar rahen, local health advisory follow karein."};
+    }
+
+    function updateAQIUI(aqi, locText, sourceText){
+      const valEl = $("#aqiValue");
+      const locEl = $("#aqiLocation");
+      const labelEl = $("#aqiLabel");
+      const descEl = $("#aqiDesc");
+      const barEl = $("#aqiBar");
+      if(!valEl) return;
+
+      if(isNaN(aqi)){
+        valEl.textContent = "—";
+        labelEl.textContent = "Unavailable";
+        descEl.textContent = "AQI data could not be loaded";
+        barEl.style.width = "0%";
+        return;
+      }
+
+      valEl.textContent = aqi;
+      locEl.textContent = locText || "Location unavailable";
+      const info = classifyAQI(aqi);
+      labelEl.textContent = info.label;
+      descEl.textContent = info.note + (sourceText ? ` • Source: ${sourceText}` : "");
+      const pct = Math.max(0, Math.min(AQI_MAX, aqi)) / AQI_MAX * 100;
+      barEl.style.width = pct + "%";
+      barEl.style.background = info.color;
+    }
+
+    async function fetchAQIByCoords(lat, lon){
+      // NOTE: "demo" token is for testing. Get your own free token from https://aqicn.org/api/
+      const token = "demo";
+      const url = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${token}`;
+      const resp = await fetch(url);
+      const json = await resp.json();
+      if(json.status !== "ok") throw new Error("AQI API error");
+      const data = json.data;
+      const aqi = Number(data.aqi);
+      const city = data.city?.name || "Nearby station";
+      const source = data.attributions?.[0]?.name || "WAQI";
+      updateAQIUI(aqi, city, source);
+    }
+
+    async function fetchAQIByCity(city){
+      const token = "demo";
+      const url = `https://api.waqi.info/feed/${encodeURIComponent(city)}/?token=${token}`;
+      const resp = await fetch(url);
+      const json = await resp.json();
+      if(json.status !== "ok") throw new Error("AQI API error");
+      const data = json.data;
+      const aqi = Number(data.aqi);
+      const cityName = data.city?.name || city;
+      const source = data.attributions?.[0]?.name || "WAQI";
+      updateAQIUI(aqi, cityName, source);
+    }
+
+    function initAQI(){
+      const valEl = $("#aqiValue");
+      if(!valEl) return;
+
+      $("#aqiLocation").textContent = "Detecting location...";
+      $("#aqiValue").textContent = "—";
+      $("#aqiLabel").textContent = "Loading...";
+      $("#aqiDesc").textContent = "Fetching real‑time AQI data";
+
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const lat = pos.coords.latitude.toFixed(3);
+            const lon = pos.coords.longitude.toFixed(3);
+            fetchAQIByCoords(lat, lon).catch(err=>{
+              console.error("AQI geo fetch error", err);
+              $("#aqiLocation").textContent = "Using default city (Delhi)";
+              fetchAQIByCity("Delhi").catch(e=>{
+                console.error("AQI fallback error", e);
+                updateAQIUI(NaN);
+              });
+            });
+          },
+          err => {
+            console.warn("Geolocation denied", err);
+            $("#aqiLocation").textContent = "Using default city (Delhi)";
+            fetchAQIByCity("Delhi").catch(e=>{
+              console.error("AQI fallback error", e);
+              updateAQIUI(NaN);
+            });
+          },
+          {timeout:8000}
+        );
+      } else {
+        $("#aqiLocation").textContent = "Using default city (Delhi)";
+        fetchAQIByCity("Delhi").catch(e=>{
+          console.error("AQI fallback error", e);
+          updateAQIUI(NaN);
+        });
+      }
+    }
+
+    // ------------- Init -------------
+    function initDashboard(){
+      $("#yr").textContent = new Date().getFullYear();
+      const st = loadState();
+      if(!st.trend) {
+        st.trend = buildTrends(null);
+        saveState(st);
+      }
+      refreshHome();
+      initAQI();
+    }
+  </script>
+</body>
+</html>
+```
